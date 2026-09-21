@@ -30,10 +30,7 @@
             flex-direction: column;
             align-items: center;
         }
-        .container {
-            width: 100%;
-            max-width: 420px;
-        }
+        .container { width: 100%; max-width: 420px; }
         .header {
             background: var(--card-bg);
             padding: 24px 20px;
@@ -43,25 +40,9 @@
             border: 1px solid var(--border-color);
             margin-bottom: 16px;
         }
-        .balance-label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-        .balance-box {
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--accent);
-            margin: 8px 0;
-            text-shadow: 0 0 20px var(--accent-glow);
-        }
-        .sub-balance {
-            font-size: 14px;
-            color: var(--success);
-            font-weight: 600;
-        }
+        .balance-label { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .balance-box { font-size: 36px; font-weight: 800; color: var(--accent); margin: 8px 0; text-shadow: 0 0 20px var(--accent-glow); }
+        .sub-balance { font-size: 14px; color: var(--success); font-weight: 600; }
         .card {
             background: var(--card-bg);
             padding: 18px;
@@ -70,20 +51,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             border: 1px solid var(--border-color);
         }
-        .card h3 {
-            margin: 0 0 8px 0;
-            font-size: 17px;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin: 0 0 14px 0;
-            line-height: 1.4;
-        }
+        .card h3 { margin: 0 0 8px 0; font-size: 17px; color: var(--text-color); display: flex; align-items: center; gap: 8px; }
+        .card p { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px 0; line-height: 1.4; }
         button.action-btn {
             width: 100%;
             background: var(--btn-bg);
@@ -100,7 +69,6 @@
         button.action-btn:hover { background: var(--btn-hover); transform: translateY(-1px); }
         button.action-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; transform: none; }
         
-        /* 4'lü Sekme Menüsü (Klas Tasarım) */
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -130,14 +98,8 @@
             border-radius: 10px;
             transition: all 0.2s;
         }
-        .nav-item.active {
-            color: var(--accent);
-            background: rgba(56, 189, 248, 0.1);
-        }
-        .nav-item span {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
+        .nav-item.active { color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+        .nav-item span { font-size: 20px; margin-bottom: 4px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
@@ -183,19 +145,19 @@
                 <h3>📋 Özel Görevler</h3>
                 <p>Görevleri tamamla, ekstra puanları cüzdanına ekle.</p>
                 <div id="tasksList">
-                    <div class="task-item">
+                    <div class="task-item" id="task-t1">
                         <div>
                             <strong>Kanalımıza Abone Ol</strong>
                             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">+150 Puan</div>
                         </div>
-                        <button class="action-btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t1', 150)">Yap</button>
+                        <button class="action-btn" id="btn-t1" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t1', 150)">Yap</button>
                     </div>
-                    <div class="task-item">
+                    <div class="task-item" id="task-t2">
                         <div>
                             <strong>Sohbet Grubumuza Katıl</strong>
                             <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">+200 Puan</div>
                         </div>
-                        <button class="action-btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t2', 200)">Yap</button>
+                        <button class="action-btn" id="btn-t2" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t2', 200)">Yap</button>
                     </div>
                 </div>
             </div>
@@ -264,10 +226,22 @@
                     document.getElementById('balance').innerText = data.balance.toFixed(2);
                     document.getElementById('adsCount').innerText = data.ads_watched;
                     document.getElementById('refCount').innerText = data.ref_count || 0;
+                    
                     if(!data.can_claim_daily) {
                         const btn = document.getElementById('dailyBtn');
                         btn.innerText = "Ödül Alındı (Bekliyor)";
                         btn.disabled = true;
+                    }
+
+                    if(data.completed_tasks) {
+                        data.completed_tasks.forEach(taskId => {
+                            const btn = document.getElementById('btn-' + taskId);
+                            if(btn) {
+                                btn.innerText = "Tamamlandı";
+                                btn.disabled = true;
+                                btn.style.background = "#334155";
+                            }
+                        });
                     }
                 }
             });
