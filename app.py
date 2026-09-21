@@ -3,24 +3,17 @@ import sqlite3, datetime, json, os
 
 app = Flask(__name__)
 
+# BURAYA TELEGRAM MİNİ APP İÇİN HAZIRLADIĞIN GERÇEK HTML KODUNU YAPIŞTIRACAKSIN
 HTML_Content = """<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>İzle Kazan</title>
-    <style>
-        body { background: #0f172a; color: #fff; font-family: sans-serif; text-align: center; padding: 50px 20px; margin: 0; }
-        .card { background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 400px; margin: 0 auto; }
-        h1 { color: #38bdf8; font-size: 24px; margin-bottom: 10px; }
-        p { color: #94a3b8; font-size: 14px; }
-    </style>
+    <!-- Buraya kendi stillerin ve tasarımın gelecek -->
 </head>
 <body>
-    <div class="card">
-        <h1>IZLE KAZAN AKTIF</h1>
-        <p>Sistem basariyla kuruldu ve calisiyor.</p>
-    </div>
+    <h1>Asıl Arayüz Buraya Gelecek</h1>
 </body>
 </html>"""
 
