@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Watch & Earn Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #000000; color: #ffffff; padding-bottom: 90px; display: flex; flex-direction: column; min-height: 100vh; }
+        .header { background: #0a0a0a; padding: 16px; text-align: center; border-bottom: 1px solid #1a1a1a; font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .balance-card { background: #0f0f0f; padding: 22px; border-radius: 16px; margin: 15px; text-align: center; border: 1px solid #222222; box-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+        .balance-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888888; }
+        .balance-amount { font-size: 38px; font-weight: 800; margin: 6px 0; color: #38bdf8; }
+        .balance-sub { font-size: 13px; background: #181818; color: #38bdf8; padding: 6px 14px; border-radius: 20px; display: inline-block; margin-top: 4px; border: 1px solid #2a2a2a; }
+        .daily-box { background: #0a0a0a; margin: 0 15px 15px 15px; padding: 15px; border-radius: 14px; border: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0a0a0a; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1a1a1a; z-index: 99; }
+        .nav-item { color: #666666; text-decoration: none; font-size: 11px; text-align: center; cursor: pointer; flex: 1; transition: all 0.2s ease; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+        .nav-item.active { color: #38bdf8; font-weight: bold; }
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+        .btn { background: #0284c7; color: white; border: none; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: #1a1a1a; color: #444444; cursor: not-allowed; border: 1px solid #222222; }
+        .btn-success { background: #10b981; }
+        .task-card { background: #0a0a0a; padding: 16px; border-radius: 14px; margin-bottom: 12px; border: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+        .task-info { flex: 1; margin-right: 12px; }
+        .task-title { font-weight: bold; font-size: 14px; color: #ffffff; }
+        .task-desc { font-size: 12px; color: #888888; margin-top: 4px; }
+        .task-reward { color: #10b981; font-weight: bold; font-size: 13px; margin-top: 6px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: #888888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; background: #121212; border: 1px solid #222222; color: white; border-radius: 10px; font-size: 14px; outline: none; }
+        .input-group input:focus { border-color: #38bdf8; }
+        .ref-box { background: #121212; padding: 12px; border-radius: 10px; border: 1px dashed #333333; font-size: 13px; word-break: break-all; margin-bottom: 12px; color: #38bdf8; text-align: center; font-weight: bold; }
+        .ref-stat { background: #0a0a0a; padding: 18px; border-radius: 14px; border: 1px solid #1a1a1a; text-align: center; margin-bottom: 15px; }
+        .converter-box { background: #0a0a0a; padding: 16px; border-radius: 14px; border: 1px solid #1a1a1a; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <i class="fa-solid fa-bolt"></i> Watch & Earn
+    </div>
+
+    <div class="balance-card">
+        <div class="balance-title">Toplanan Puanınız</div>
+        <div class="balance-amount" id="user-points">0 PTS</div>
+        <div class="balance-sub" id="user-converted">≈ 0.00 TRY / 0.00 USDT</div>
+    </div>
+
+    <!-- TAB 1: ANA SAYFA -->
+    <div id="tab-home" class="tab-content active">
+        <div class="daily-box">
+            <div>
+                <div style="font-weight: bold; font-size: 14px;"><i class="fa-solid fa-gift" style="color:#10b981;"></i> Günlük Ödül</div>
+                <div style="font-size: 11px; color: #888888;">12 saatte bir +100 PTS kazan.</div>
+            </div>
+            <button class="btn btn-success" id="daily-btn" style="width: auto; padding: 8px 16px;" onclick="claimDaily()">Ödülü Al</button>
+        </div>
+
+        <div class="task-card" style="flex-direction: column; text-align: center; padding: 22px;">
+            <i class="fa-solid fa-circle-play" style="font-size: 44px; color: #38bdf8; margin-bottom: 12px;"></i>
+            <h3 style="margin-bottom: 6px;">Reklam İzle & Puan Kazan</h3>
+            <p style="font-size: 12px; color: #888888; margin-bottom: 16px;">Her reklam izleme +25 PTS kazandırır.</p>
+            <div style="font-size: 14px; color: #38bdf8; font-weight: bold; margin-bottom: 16px;" id="ad-limit-text">Kalan Reklam: 10 / 10</div>
+            <button class="btn" id="watch-ad-btn" onclick="startAd()"><i class="fa-solid fa-play"></i> Reklamı Başlat (+25 PTS)</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: GÖREVLER -->
+    <div id="tab-tasks" class="tab-content">
+        <div style="margin-bottom: 15px;">
+            <h3 style="font-size: 16px;">📲 İndir & Sil Görevleri</h3>
+            <p style="font-size: 12px; color: #888888;">Uygulamayı indirin ve açın. Puan geldikten sonra silebilirsiniz. (12 saatte bir yenilenir)</p>
+        </div>
+        <div id="tasks-list"></div>
+    </div>
+
+    <!-- TAB 3: REFERANS -->
+    <div id="tab-ref" class="tab-content">
+        <div class="ref-stat">
+            <div style="font-size: 12px; color: #888888;">Toplam Davet Edilen Kişi</div>
+            <div style="font-size: 32px; font-weight: bold; color: #38bdf8; margin-top: 4px;" id="ref-count">0</div>
+            <div style="font-size: 12px; color: #10b981; margin-top: 4px;">Her aktif davet için +150 PTS</div>
+        </div>
+
+        <div class="task-card" style="flex-direction: column; align-items: stretch;">
+            <h4 style="margin-bottom: 10px; font-size: 14px;">Özel Davet Bağlantınız:</h4>
+            <div class="ref-box" id="ref-link">Yükleniyor...</div>
+            <button class="btn" onclick="copyRefLink()"><i class="fa-regular fa-copy"></i> Bağlantıyı Kopyala</button>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <h4 style="font-size: 14px; margin-bottom: 10px;">Davet Ettikleriniz:</h4>
+            <div id="ref-list" style="font-size: 12px; color: #888888;"></div>
+        </div>
+    </div>
+
+    <!-- TAB 4: CÜZDAN & DÖNÜŞTÜRÜCÜ -->
+    <div id="tab-wallet" class="tab-content">
+        <div class="converter-box">
+            <h3 style="margin-bottom: 12px; font-size: 15px; color: #38bdf8;"><i class="fa-solid fa-calculator"></i> Puan Dönüştürücü</h3>
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Dönüştürülecek Puan Miktarı:</label>
+                <input type="number" id="calc-input-pts" placeholder="Örn: 1000" oninput="liveConvert()">
+            </div>
+            <div style="font-size: 13px; color: #10b981; font-weight: bold; background: #121212; padding: 10px; border-radius: 8px; margin-bottom: 12px;" id="live-calc-res">
+                Karşılığı: 0.00 TRY / 0.00 USDT
+            </div>
+            <button class="btn" style="background: #0284c7;" onclick="confirmConvert()"><i class="fa-solid fa-check"></i> Puanı Dönüştürmeyi Onayla</button>
+            <div style="font-size: 11px; color: #666666; margin-top: 8px;">* 1.000 PTS = 35.00 TRY / 1.00 USDT</div>
+        </div>
+
+        <div class="task-card" style="flex-direction: column; align-items: stretch;">
+            <h3 style="margin-bottom: 15px; font-size: 15px;"><i class="fa-solid fa-wallet"></i> Para Çekim Talebi</h3>
+            
+            <div class="input-group">
+                <label>Para Birimi:</label>
+                <select id="withdraw-currency" onchange="syncWithdrawVal()">
+                    <option value="TRY">Türk Lirası (TRY)</option>
+                    <option value="USDT">Tether (USDT)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Ödeme Yöntemi:</label>
+                <select id="withdraw-method">
+                    <option value="BANK">Banka Havalesi (IBAN)</option>
+                    <option value="USDT_TRC20">USDT (TRC-20)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Çekilecek Puan Miktarı (Min: 1000):</label>
+                <input type="number" id="withdraw-amount" placeholder="1000" min="1000" oninput="syncWithdrawVal()">
+                <div style="font-size: 12px; color: #10b981; margin-top: 6px; font-weight: bold;" id="withdraw-preview">Çekilecek Tutar: 0.00 TRY</div>
+            </div>
+
+            <div class="input-group">
+                <label>Hesap Bilgisi (IBAN veya TRC-20 Adresi):</label>
+                <input type="text" id="withdraw-details" placeholder="TR... veya Adres + Ad Soyad">
+            </div>
+
+            <button class="btn btn-success" onclick="submitWithdrawal()"><i class="fa-solid fa-paper-plane"></i> Çekim Talebini Gönder</button>
+        </div>
+    </div>
+
+    <!-- NAVİGASYON BAR -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <i class="fa-solid fa-house"></i> Ana Sayfa
+        </div>
+        <div class="nav-item" onclick="switchTab('tasks', this)">
+            <i class="fa-solid fa-list-check"></i> Görevler
+        </div>
+        <div class="nav-item" onclick="switchTab('ref', this)">
+            <i class="fa-solid fa-user-group"></i> Referans
+        </div>
+        <div class="nav-item" onclick="switchTab('wallet', this)">
+            <i class="fa-solid fa-wallet"></i> Cüzdan
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if(tg) {
+            try { tg.expand(); tg.ready(); } catch(e){}
+        }
+
+        let urlParams = new URLSearchParams(window.location.search);
+        let refByParam = urlParams.get('start') ? urlParams.get('start').replace('ref_', '') : '';
+
+        function getTelegramUserId() {
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                return tg.initDataUnsafe.user.id.toString();
+            }
+            return "12345678";
+        }
+
+        let userId = getTelegramUserId();
+        let userPoints = 0;
+        let adsWatched = 0;
+        let completedTasks = [];
+
+        const tasksData = [
+            { id: "1", title: "Trendyol Uygulamasını İndir & Sil", desc: "Uygulamayı indirip açın, ardından silebilirsiniz.", reward: 200 },
+            { id: "2", title: "Binance TR İndir & Sil", desc: "Uygulamayı indirin ve açın.", reward: 300 },
+            { id: "3", title: "Getir Uygulamasını Dene", desc: "Yükleyin, göz atıp silin.", reward: 150 },
+            { id: "4", title: "Paribu Kripto İncele & Sil", desc: "Yükleyip 30 saniye inceleyin.", reward: 250 },
+            { id: "5", title: "Hepsiburada Yükle & Sil", desc: "Açın ve ödülünüzü alın.", reward: 200 }
+        ];
+
+        async function fetchUserData() {
+            userId = getTelegramUserId();
+            document.getElementById('ref-link').innerText = `https://t.me/mini_bot_csyg_bot?start=ref_${userId}`;
+            
+            try {
+                let res = await fetch('/api/user_data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId, ref_by: refByParam })
+                });
+                let data = await res.json();
+
+                if(data.success) {
+                    userPoints = data.points;
+                    adsWatched = data.ads_watched;
+                    completedTasks = data.completed_tasks || [];
+
+                    let dailyBtn = document.getElementById('daily-btn');
+                    if(!data.can_claim_daily) {
+                        dailyBtn.disabled = true;
+                        dailyBtn.innerText = "Alındı";
+                    } else {
+                        dailyBtn.disabled = false;
+                        dailyBtn.innerText = "Ödülü Al";
+                    }
+
+                    document.getElementById('ref-count').innerText = data.ref_count;
+                    let refHtml = (data.referrals && data.referrals.length) ? data.referrals.map(r => `<div>• ID: ${r} (+150 PTS)</div>`).join('') : "Henüz davet ettiğiniz üye yok.";
+                    document.getElementById('ref-list').innerHTML = refHtml;
+
+                    updateUI();
+                    renderTasks();
+                }
+            } catch(e) {
+                console.error("Fetch Hatası:", e);
+                renderTasks();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('user-points').innerText = `${userPoints} PTS`;
+            let tl = ((userPoints / 1000) * 35).toFixed(2);
+            let usdt = (userPoints / 1000).toFixed(2);
+            document.getElementById('user-converted').innerText = `≈ ${tl} TRY / ${usdt} USDT`;
+
+            let remAds = Math.max(0, 10 - adsWatched);
+            document.getElementById('ad-limit-text').innerText = `Kalan Reklam: ${remAds} / 10`;
+            let btn = document.getElementById('watch-ad-btn');
+            if(remAds <= 0) {
+                btn.disabled = true;
+                btn.innerText = "12 Saatlik Limit Doldu";
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-play"></i> Reklamı Başlat (+25 PTS)`;
+            }
+        }
+
+        async function startAd() {
+            if(adsWatched >= 10) return;
+            let btn = document.getElementById('watch-ad-btn');
+            btn.disabled = true;
+
+            let timer = 5;
+            btn.innerText = `Reklam İzleniyor (${timer} sn)...`;
+
+            let countdown = setInterval(() => {
+                timer--;
+                if(timer > 0) {
+                    btn.innerText = `Reklam İzleniyor (${timer} sn)...`;
+                } else {
+                    clearInterval(countdown);
+                    sendAdReward();
+                }
+            }, 1000);
+        }
+
+        async function sendAdReward() {
+            userId = getTelegramUserId();
+            try {
+                let res = await fetch('/api/watch_ad', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId })
+                });
+                let data = await res.json();
+
+                if(data.success) {
+                    userPoints = data.points;
+                    adsWatched = data.ads_watched;
+                    updateUI();
+                    alert("Tebrikler! +25 Puan bakiyenize eklendi.");
+                } else {
+                    alert(data.error || "İşlem başarısız.");
+                }
+            } catch(e) {
+                alert("Bağlantı hatası oluştu.");
+            }
+            updateUI();
+        }
+
+        async function claimDaily() {
+            userId = getTelegramUserId();
+            try {
+                let res = await fetch('/api/claim_daily', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId })
+                });
+                let data = await res.json();
+
+                if(data.success) {
+                    userPoints = data.points;
+                    let dailyBtn = document.getElementById('daily-btn');
+                    dailyBtn.disabled = true;
+                    dailyBtn.innerText = "Alındı";
+                    updateUI();
+                    alert("Tebrikler! +100 Günlük Ödülünüz eklendi.");
+                } else {
+                    alert(data.error || "İşlem başarısız.");
+                }
+            } catch(e) {
+                alert("Bağlantı hatası.");
+            }
+        }
+
+        function renderTasks() {
+            let html = '';
+            tasksData.forEach(t => {
+                let isDone = completedTasks.includes(t.id.toString());
+                html += `
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="task-title">${t.title}</div>
+                            <div class="task-desc">${t.desc}</div>
+                            <div class="task-reward">+${t.reward} PTS</div>
+                        </div>
+                        <button class="btn" style="width: auto; padding: 8px 16px;" ${isDone ? 'disabled' : ''} onclick="doTask('${t.id}', ${t.reward})">
+                            ${isDone ? 'Tamamlandı' : 'Yap'}
+                        </button>
+                    </div>
+                `;
+            });
+            document.getElementById('tasks-list').innerHTML = html;
+        }
+
+        async function doTask(taskId, reward) {
+            userId = getTelegramUserId();
+            try {
+                let res = await fetch('/api/complete_task', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId, task_id: taskId, reward: reward })
+                });
+                let data = await res.json();
+
+                if(data.success) {
+                    userPoints = data.points;
+                    completedTasks = data.completed_tasks;
+                    updateUI();
+                    renderTasks();
+                    alert(`Görev Tamamlandı! +${reward} PTS eklendi.`);
+                } else {
+                    alert(data.error || "İşlem başarısız.");
+                }
+            } catch(e) {
+                alert("Bağlantı hatası.");
+            }
+        }
+
+        function liveConvert() {
+            let val = parseInt(document.getElementById('calc-input-pts').value) || 0;
+            let tl = ((val / 1000) * 35).toFixed(2);
+            let usdt = (val / 1000).toFixed(2);
+            document.getElementById('live-calc-res').innerText = `Karşılığı: ${tl} TRY / ${usdt} USDT`;
+        }
+
+        function confirmConvert() {
+            let val = parseInt(document.getElementById('calc-input-pts').value) || 0;
+            if(val <= 0) {
+                alert("Lütfen geçerli bir puan miktarı giriniz.");
+                return;
+            }
+            if(val > userPoints) {
+                alert("Girilen puan mevcut bakiyenizden yüksek olamaz!");
+                return;
+            }
+            let tl = ((val / 1000) * 35).toFixed(2);
+            let usdt = (val / 1000).toFixed(2);
+            alert(`Tebrikler! ${val} PTS karşılığında ${tl} TRY / ${usdt} USDT dönüşüm hesaplaması doğrulandı.`);
+        }
+
+        function syncWithdrawVal() {
+            let pts = parseInt(document.getElementById('withdraw-amount').value) || 0;
+            let curr = document.getElementById('withdraw-currency').value;
+            if(curr === "TRY") {
+                let tl = ((pts / 1000) * 35).toFixed(2);
+                document.getElementById('withdraw-preview').innerText = `Çekilecek Tutar: ${tl} TRY`;
+            } else {
+                let usdt = (pts / 1000).toFixed(2);
+                document.getElementById('withdraw-preview').innerText = `Çekilecek Tutar: ${usdt} USDT`;
+            }
+        }
+
+        async function submitWithdrawal() {
+            userId = getTelegramUserId();
+            let amount_pts = parseInt(document.getElementById('withdraw-amount').value);
+            let currency = document.getElementById('withdraw-currency').value;
+            let method = document.getElementById('withdraw-method').value;
+            let details = document.getElementById('withdraw-details').value;
+
+            if(!amount_pts || amount_pts < 1000 || !details) {
+                alert("Lütfen minimum 1000 puan girin ve hesap bilgilerinizi yazın.");
+                return;
+            }
+
+            try {
+                let res = await fetch('/api/withdraw', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId, method: method, currency: currency, amount_pts: amount_pts, details: details })
+                });
+                let data = await res.json();
+
+                if(data.success) {
+                    userPoints = data.new_points;
+                    updateUI();
+                    alert("Çekim talebiniz veritabanına kaydedildi!");
+                } else {
+                    alert(data.error || "Çekim başarısız.");
+                }
+            } catch(e) {
+                alert("Bağlantı hatası.");
+            }
+        }
+
+        function copyRefLink() {
+            let text = document.getElementById('ref-link').innerText;
+            if(text && text !== "Yükleniyor...") {
+                navigator.clipboard.writeText(text);
+                alert("Referans bağlantısı kopyalandı!");
+            } else {
+                alert("Bağlantı henüz hazır değil.");
+            }
+        }
+
+        function switchTab(tabName, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            el.classList.add('active');
+        }
+
+        fetchUserData();
+        renderTasks();
+    </script>
+</body>
+</html>
