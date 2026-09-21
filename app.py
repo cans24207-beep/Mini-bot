@@ -10,7 +10,7 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    conn.execute("""
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS users (
             telegram_id TEXT PRIMARY KEY,
             points INTEGER DEFAULT 0,
@@ -22,7 +22,7 @@ def init_db():
             last_daily_time TEXT,
             task_timestamps TEXT DEFAULT '{}'
         )
-    """)
+    ''')
     conn.commit()
     conn.close()
 
