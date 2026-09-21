@@ -95,3 +95,98 @@ def watch_ad():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+@app.route('/api/watch_ad', methods=['POST'])
+def watch_ad():
+    data = request.get_json()
+    user_id = data.get('userId')
+    
+    # Kullanıcıyı veritabanından bul
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT points, last_ad_watched FROM users WHERE id = %s', (user_id,))
+    user = cur.fetchone()
+    
+    if not user:
+        cur.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Kullanıcı bulunamadı.'}), 404
+        
+    last_watched = user[1]
+    now = datetime.now()
+    
+    # 25 saniye geçmeden tekrar ödül verilmesini engelle (Cooldown)
+    if last_watched and (now - last_watched).total_seconds() < 25:
+        cur.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Çok hızlı istek atıldı, lütfen bekleyin.'}), 400
+        
+    # Puanı 4 artır ve son izleme zamanını güncelle
+    cur.execute(
+        'UPDATE users SET points = points + 4, last_ad_watched = %s WHERE id = %s',
+        (now, user_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'Reklam ödülü eklendi!'})
+@app.route('/api/complete_task', methods=['POST'])
+def complete_task():
+    data = request.get_json()
+    user_id = data.get('userId')
+    task_id = data.get('taskId')
+    reward = data.get('reward', 0)
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Bu görev daha önce yapılmış mı kontrol et
+        cur.execute('SELECT * FROM completed_tasks WHERE user_id = %s AND task_id = %s', (user_id, task_id))
+        if cur.fetchone():
+            return jsonify({'success': False, 'message': 'Bu görev zaten tamamlandı.'}), 400
+            
+        # Görevi kaydet ve puanı ekle
+        cur.execute('INSERT INTO completed_tasks (user_id, task_id) VALUES (%s, %s)', (user_id, task_id))
+        cur.execute('UPDATE users SET points = points + %s WHERE id = %s', (reward, user_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Görev ödülü eklendi!'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+@app.route('/api/convert_points', methods=['POST'])
+def convert_points():
+    data = request.get_json()
+    user_id = data.get('userId')
+    points_to_convert = data.get('pointsToConvert', 0)
+    cash_earned = data.get('cashEarned', 0.0)
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Kullanıcının güncel puanını kontrol et
+        cur.execute('SELECT points FROM users WHERE id = %s', (user_id,))
+        user = cur.fetchone()
+        
+        if not user or user[0] < points_to_convert:
+            return jsonify({'success': False, 'message': 'Yetersiz puan!'}), 400
+            
+        # Puanı düşür ve nakit bakiyeyi artır
+        cur.execute(
+            'UPDATE users SET points = points - %s, balance = balance + %s WHERE id = %s',
+            (points_to_convert, cash_earned, user_id)
+        )
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Dönüştürme başarılı, puanlar güncellendi!'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
