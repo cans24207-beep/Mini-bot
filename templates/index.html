@@ -7,125 +7,150 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
             --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.2);
             --text-color: #f8fafc;
             --text-secondary: #94a3b8;
-            --btn-bg: #2563eb;
-            --btn-hover: #1d4ed8;
-            --danger: #ef4444;
-            --success: #22c55e;
+            --btn-bg: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            --btn-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            --success: #10b981;
+            --border-color: #1e293b;
         }
+        * { box-sizing: border-box; }
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 15px;
-            padding-bottom: 70px;
+            padding: 16px;
+            padding-bottom: 85px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .container {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
         .header {
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: 16px;
+            padding: 24px 20px;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            margin-bottom: 15px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        .balance-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
         .balance-box {
-            font-size: 28px;
-            font-weight: bold;
+            font-size: 36px;
+            font-weight: 800;
             color: var(--accent);
-            margin: 10px 0;
+            margin: 8px 0;
+            text-shadow: 0 0 20px var(--accent-glow);
         }
-        .points-box {
+        .sub-balance {
             font-size: 14px;
-            color: var(--text-secondary);
+            color: var(--success);
+            font-weight: 600;
         }
         .card {
             background: var(--card-bg);
-            padding: 15px;
-            border-radius: 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
         }
         .card h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            color: var(--accent);
+            margin: 0 0 8px 0;
+            font-size: 17px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        button {
+        .card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 14px 0;
+            line-height: 1.4;
+        }
+        button.action-btn {
             width: 100%;
-            background-color: var(--btn-bg);
+            background: var(--btn-bg);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 12px;
             font-size: 15px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
-        button:hover { background-color: var(--btn-hover); }
-        button:disabled { background-color: #475569; cursor: not-allowed; }
+        button.action-btn:hover { background: var(--btn-hover); transform: translateY(-1px); }
+        button.action-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; box-shadow: none; transform: none; }
         
-        /* Alt 4'lü Sekme Menüsü */
+        /* 4'lü Sekme Menüsü (Klas Tasarım) */
         .nav-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: #1e293b;
+            background: rgba(19, 27, 46, 0.95);
+            backdrop-filter: blur(10px);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
-            border-top: 1px solid #334155;
+            padding: 10px 8px;
+            box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
+            border-top: 1px solid var(--border-color);
             z-index: 1000;
         }
         .nav-item {
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 500;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 25%;
-            padding: 0;
-            margin: 0;
+            padding: 6px 0;
+            border-radius: 10px;
+            transition: all 0.2s;
         }
         .nav-item.active {
             color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
         }
         .nav-item span {
-            font-size: 18px;
-            margin-bottom: 3px;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        
         .task-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #0f172a;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            background: #0b0f19;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
         }
     </style>
 </head>
@@ -134,63 +159,66 @@
         <!-- 1. SEKME: ANA SAYFA -->
         <div id="tab-home" class="tab-content active">
             <div class="header">
-                <div class="points-box">Toplam Puanınız</div>
+                <div class="balance-label">Toplam Puanınız</div>
                 <div class="balance-box" id="points">0</div>
-                <div class="points-box">Bakiye: <span id="balance" style="color: var(--success); font-weight: bold;">0.00 TL</span></div>
+                <div class="sub-balance">Bakiye: <span id="balance">0.00</span> TL</div>
             </div>
 
             <div class="card">
                 <h3>🎁 Günlük Ödül</h3>
-                <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 10px 0;">Her 12 saatte bir 100 puan kazan!</p>
-                <button id="dailyBtn" onclick="claimDaily()">Günlük Ödülü Al</button>
+                <p>Her 12 saatte bir cömert günlük ödülünü almayı unutma!</p>
+                <button id="dailyBtn" class="action-btn" onclick="claimDaily()">Günlük Ödülü Al (+100 Puan)</button>
             </div>
 
             <div class="card">
                 <h3>📺 Reklam İzle Kazan</h3>
-                <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 10px 0;">İzle başı 25 puan (İzlenen: <span id="adsCount">0</span>/10)</p>
-                <button onclick="watchAd()">Reklam İzle</button>
+                <p>İzle başı 25 puan kazan. 12 saatte bir yenilenir (İzlenen: <span id="adsCount">0</span>/10)</p>
+                <button class="action-btn" onclick="watchAd()">Reklam İzle</button>
             </div>
         </div>
 
         <!-- 2. SEKME: GÖREVLER -->
         <div id="tab-tasks" class="tab-content">
             <div class="card">
-                <h3>📋 Kazanandırma Görevleri</h3>
+                <h3>📋 Özel Görevler</h3>
+                <p>Görevleri tamamla, ekstra puanları cüzdanına ekle.</p>
                 <div id="tasksList">
                     <div class="task-item">
                         <div>
-                            <strong>Kanalımıza Katıl</strong>
-                            <div style="font-size: 11px; color: var(--text-secondary);">+150 Puan</div>
+                            <strong>Kanalımıza Abone Ol</strong>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">+150 Puan</div>
                         </div>
-                        <button style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="completeTask('t1', 150)">Yap</button>
+                        <button class="action-btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t1', 150)">Yap</button>
                     </div>
                     <div class="task-item">
                         <div>
-                            <strong>Telegram Grubuna Gir</strong>
-                            <div style="font-size: 11px; color: var(--text-secondary);">+200 Puan</div>
+                            <strong>Sohbet Grubumuza Katıl</strong>
+                            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">+200 Puan</div>
                         </div>
-                        <button style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="completeTask('t2', 200)">Yap</button>
+                        <button class="action-btn" style="width: auto; padding: 8px 16px; font-size: 12px;" onclick="completeTask('t2', 200)">Yap</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 3. SEKME: ARKADAŞLAR (REFERANS) -->
+        <!-- 3. SEKME: ARKADAŞLAR -->
         <div id="tab-refs" class="tab-content">
             <div class="card" style="text-align: center;">
-                <h3>👥 Referans Sistemi</h3>
-                <p style="font-size: 13px; color: var(--text-secondary);">Arkadaşını davet et, her davet için ödül kazan!</p>
-                <div style="font-size: 20px; font-weight: bold; color: var(--accent); margin: 15px 0;">Davet Edilen: <span id="refCount">0</span> Kişi</div>
-                <button onclick="copyRefLink()">Davet Linkini Kopyala</button>
+                <h3>👥 Davet Et & Kazan</h3>
+                <p>Özel referans linkinle arkadaşlarını davet et, birlikte kazanın.</p>
+                <div style="font-size: 24px; font-weight: 800; color: var(--accent); margin: 20px 0;">
+                    <span id="refCount">0</span> <span style="font-size: 14px; color: var(--text-secondary); font-weight: normal;">Davet Edilen</span>
+                </div>
+                <button class="action-btn" onclick="copyRefLink()">Davet Linkini Kopyala</button>
             </div>
         </div>
 
-        <!-- 4. SEKME: CÜZDAN & ÇEKİM -->
+        <!-- 4. SEKME: CÜZDAN -->
         <div id="tab-wallet" class="tab-content">
             <div class="card">
-                <h3>💰 Puan Dönüştür & Çek</h3>
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">1000 Puan = 35 TL değerindedir.</p>
-                <button onclick="convertPoints()" style="background-color: var(--success);">Puanları Bakiyeye Çevir</button>
+                <h3>💰 Puan Dönüştürücü</h3>
+                <p>1000 Puan = 35 TL değerindedir. Puanlarını anında nakit bakiyeye dönüştür.</p>
+                <button class="action-btn" onclick="convertPoints()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Puanları Bakiyeye Çevir</button>
             </div>
         </div>
     </div>
@@ -233,17 +261,13 @@
             .then(data => {
                 if(data.success) {
                     document.getElementById('points').innerText = data.points;
-                    document.getElementById('balance').innerText = data.balance.toFixed(2) + ' TL';
+                    document.getElementById('balance').innerText = data.balance.toFixed(2);
                     document.getElementById('adsCount').innerText = data.ads_watched;
                     document.getElementById('refCount').innerText = data.ref_count || 0;
                     if(!data.can_claim_daily) {
-                        document.getElementById('dailyBtn').innerText = "Ödül Alındı (Bekliyor)";
-                        document.getElementById('dailyBtn').disabled = true;
-                    }
-                    if(data.completed_tasks) {
-                        data.completed_tasks.forEach(taskId => {
-                            // Tamamlanan görevleri pasif yap
-                        });
+                        const btn = document.getElementById('dailyBtn');
+                        btn.innerText = "Ödül Alındı (Bekliyor)";
+                        btn.disabled = true;
                     }
                 }
             });
