@@ -49,10 +49,7 @@ def get_user():
     return jsonify(dict(user))
 
 @app.route('/api/convert', methods=['POST'])
-def convert_points():
-    data = request.get_json()
-    telegram_id = data.get('telegram_id')
-    points_to_convert = data.get('points', 1200)
+def
     
     conn = get_db_connection()
     user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
