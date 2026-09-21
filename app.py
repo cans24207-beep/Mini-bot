@@ -201,6 +201,34 @@ def claim_daily():
     finally:
         cur.close()
         conn.close()
+@app.route('/api/user_data', methods=['POST'])
+def user_data():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+
+    if not telegram_id or telegram_id == 'None':
+        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
+
+    conn = get_db_connection()
+    conn.execute('INSERT OR IGNORE INTO users (telegram_id, points, balance, ads_watched, completed_tasks, ref_count) VALUES (?, 0, 0.0, 0, 0, 0)', (telegram_id,))
+    conn.commit()
+
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    conn.close()
+
+    user_dict = dict(user)
+
+    return jsonify({
+        'success': True,
+        'points': user_dict.get('points', 0),
+        'balance': user_dict.get('balance', 0.0),
+        'ads_watched': user_dict.get('ads_watched', 0),
+        'completed_tasks': [],
+        'ref_count': user_dict.get('ref_count', 0),
+        'referrals': [],
+        'can_claim_daily': True
+    })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
