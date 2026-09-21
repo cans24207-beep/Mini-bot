@@ -40,10 +40,32 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/user', methods=['GET'])
+def  @app.route('/api/user', methods=['GET'])
 def get_user():
-    telegram_id = request.args.get('telegram_id')
+    telegram_id = request.args.get('telegram_id') or request.args.get('user_id')
     if not telegram_id:
         return jsonify({'error': 'Telegram ID gereklidir'}), 400
+
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+
+    if not user:
+        conn.execute('INSERT INTO users (telegram_id, points, balance, ads_watched, completed_tasks, ref_count) VALUES (?, 0, 0.0, 0, 0, 0)', (telegram_id,))
+        conn.commit()
+        user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+
+    conn.close()
+
+    user_dict = dict(user)
+    return jsonify({
+        'telegram_id': user_dict.get('telegram_id'),
+        'points': user_dict.get('points', 0),
+        'balance': user_dict.get('balance', 0.0),
+        'ads_watched': user_dict.get('ads_watched', 0),
+        'completed_tasks': user_dict.get('completed_tasks', 0),
+        'ref_count': user_dict.get('ref_count', 0)
+    })
+
 
     conn = get_db_connection()
     user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
