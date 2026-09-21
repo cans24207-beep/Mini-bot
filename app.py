@@ -190,3 +190,22 @@ def convert_points():
     finally:
         cur.close()
         conn.close()
+@app.route('/api/claim_daily', methods=['POST'])
+def claim_daily():
+    data = request.get_json()
+    user_id = data.get('userId')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Örnek günlük ödül mantığı (puan ekleme)
+        cur.execute('UPDATE users SET points = points + 50 WHERE id = %s', (user_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Günlük ödül alındı!'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
