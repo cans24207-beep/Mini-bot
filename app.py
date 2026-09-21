@@ -1,9 +1,8 @@
+from flask import Flask, render_template, request, jsonify
 import sqlite3
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app)
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -18,16 +17,8 @@ def init_db():
             points INTEGER DEFAULT 0,
             balance REAL DEFAULT 0.0,
             ads_watched INTEGER DEFAULT 0,
-            completed_tasks INTEGER DEFAULT 0,
-            ref_count INTEGER DEFAULT 0,
-            last_ad_watched TEXT
-        )
-    ''')
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS completed_tasks (
-            user_id TEXT,
-            task_id TEXT,
-            PRIMARY KEY (user_id, task_id)
+            completed_tasks TEXT DEFAULT '',
+            ref_count INTEGER DEFAULT 0
         )
     ''')
     conn.commit()
@@ -40,7 +31,6 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/user', methods=['GET'])
-def  @app.route('/api/user', methods=['GET'])
 def get_user():
     telegram_id = request.args.get('telegram_id') or request.args.get('user_id')
     if not telegram_id:
@@ -55,7 +45,7 @@ def get_user():
         user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
 
     conn.close()
-
+    
     user_dict = dict(user)
     return jsonify({
         'telegram_id': user_dict.get('telegram_id'),
@@ -66,158 +56,23 @@ def get_user():
         'ref_count': user_dict.get('ref_count', 0)
     })
 
-
-    conn = get_db_connection()
-    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
-
-    if not user:
-        conn.execute('INSERT INTO users (telegram_id, points, balance) VALUES (?, 0, 0.0)', (telegram_id,))
-        conn.commit()
-        user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
-
-    conn.close()
-    return jsonify(dict(user))
-
-@app.route('/api/convert', methods=['POST'])
-def convert_balance():
-    data = request.get_json(silent=True) or {}
-    telegram_id = str(data.get('telegram_id', '')).strip()
-    points_to_convert = data.get('pointsToConvert', 0)
-
-    if not telegram_id:
-        return jsonify({'success': False, 'message': 'Kullanıcı bulunamadı.'}), 400
-
-    conn = get_db_connection()
-    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
-
-    if not user or user['points'] < points_to_convert:
-        conn.close()
-        return jsonify({'success': False, 'message': 'Yetersiz puan!'}), 400
-
-    earned_try = (points_to_convert / 1000) * 35.0
-    new_points = user['points'] - points_to_convert
-    new_balance = user['balance'] + earned_try
-
-    conn.execute('UPDATE users SET points = ?, balance = ? WHERE telegram_id = ?',
-                 (new_points, new_balance, telegram_id))
-    conn.commit()
-    conn.close()
-
-    return jsonify({
-        'success': True,
-        'new_points': new_points,
-        'new_balance': new_balance
-    })
-
-@app.route('/api/watch_ad', methods=['POST'])
-def watch_ad():
-    data = request.get_json(silent=True) or {}
-    telegram_id = str(data.get('user_id', '')).strip()
-    
-    if not telegram_id or telegram_id == 'None':
-        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
-
-    conn = get_db_connection()
-    conn.execute('INSERT OR IGNORE INTO users (telegram_id, points, balance) VALUES (?, 0, 0.0)', (telegram_id,))
-    conn.execute('UPDATE users SET points = points + 25, ads_watched = ads_watched + 1 WHERE telegram_id = ?', (telegram_id,))
-    conn.commit()
-    
-    user = conn.execute('SELECT points, ads_watched FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
-    conn.close()
-
-    return jsonify({'success': True, 'points': user['points'], 'ads_watched': user['ads_watched']})
-
-@app.route('/api/complete_task', methods=['POST'])
-def complete_task():
-    data = request.get_json() or {}
-    user_id = data.get('userId')
-    task_id = data.get('taskId')
-    reward = data.get('reward', 0)
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute('SELECT * FROM completed_tasks WHERE user_id = ? AND task_id = ?', (user_id, task_id))
-        if cur.fetchone():
-            return jsonify({'success': False, 'message': 'Bu görev zaten tamamlandı.'}), 400
-
-        cur.execute('INSERT INTO completed_tasks (user_id, task_id) VALUES (?, ?)', (user_id, task_id))
-        cur.execute('UPDATE users SET points = points + ? WHERE telegram_id = ?', (reward, user_id))
-        conn.commit()
-        return jsonify({'success': True, 'message': 'Görev ödülü eklendi!'})
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        cur.close()
-        conn.close()
-
-@app.route('/api/convert_points', methods=['POST'])
-def convert_points():
-    data = request.get_json() or {}
-    user_id = data.get('userId')
-    points_to_convert = data.get('pointsToConvert', 0)
-    cash_earned = data.get('cashEarned', 0.0)
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute('SELECT points FROM users WHERE telegram_id = ?', (user_id,))
-        user = cur.fetchone()
-
-        if not user or user[0] < points_to_convert:
-            return jsonify({'success': False, 'message': 'Yetersiz puan!'}), 400
-
-        cur.execute(
-            'UPDATE users SET points = points - ?, balance = balance + ? WHERE telegram_id = ?',
-            (points_to_convert, cash_earned, user_id)
-        )
-        conn.commit()
-        return jsonify({'success': True, 'message': 'Dönüştürme başarılı, puanlar güncellendi!'})
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        cur.close()
-        conn.close()
-
-@app.route('/api/claim_daily', methods=['POST'])
-def claim_daily():
-    data = request.get_json() or {}
-    user_id = data.get('userId')
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute('UPDATE users SET points = points + 50 WHERE telegram_id = ?', (user_id,))
-        conn.commit()
-        return jsonify({'success': True, 'message': 'Günlük ödül alındı!'})
-    except Exception as e:
-        conn.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        cur.close()
-        conn.close()
 @app.route('/api/user_data', methods=['POST'])
 def user_data():
     data = request.get_json(silent=True) or {}
     telegram_id = str(data.get('user_id', '')).strip()
-
+    
     if not telegram_id or telegram_id == 'None':
         return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
 
     conn = get_db_connection()
     conn.execute('INSERT OR IGNORE INTO users (telegram_id, points, balance, ads_watched, completed_tasks, ref_count) VALUES (?, 0, 0.0, 0, 0, 0)', (telegram_id,))
     conn.commit()
-
+    
     user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
     conn.close()
 
     user_dict = dict(user)
-
+    
     return jsonify({
         'success': True,
         'points': user_dict.get('points', 0),
@@ -229,6 +84,85 @@ def user_data():
         'can_claim_daily': True
     })
 
+@app.route('/api/watch_ad', methods=['POST'])
+def watch_ad():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
+        
+    new_points = user['points'] + 25
+    new_ads = user['ads_watched'] + 1
+    
+    conn.execute('UPDATE users SET points = ?, ads_watched = ? WHERE telegram_id = ?', (new_points, new_ads, telegram_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'points': new_points, 'ads_watched': new_ads})
+
+@app.route('/api/claim_daily', methods=['POST'])
+def claim_daily():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
+        
+    new_points = user['points'] + 100
+    conn.execute('UPDATE users SET points = ? WHERE telegram_id = ?', (new_points, telegram_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'points': new_points})
+
+@app.route('/api/complete_task', methods=['POST'])
+def complete_task():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+    reward = int(data.get('reward', 0))
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
+        
+    new_points = user['points'] + reward
+    conn.execute('UPDATE users SET points = ? WHERE telegram_id = ?', (new_points, telegram_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'points': new_points, 'completed_tasks': []})
+
+@app.route('/api/withdraw', methods=['POST'])
+def withdraw():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+    amount_pts = int(data.get('amount_pts', 0))
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    
+    if not user or user['points'] < amount_pts:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Yetersiz puan veya kullanici bulunamadi.'}), 400
+        
+    new_points = user['points'] - amount_pts
+    conn.execute('UPDATE users SET points = ? WHERE telegram_id = ?', (new_points, telegram_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'new_points': new_points})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
