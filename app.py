@@ -93,12 +93,6 @@ def watch_ad():
     return jsonify({'success': True, 'points': user['points'], 'ads_watched': user['ads_watched']})
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-@app.route('/api/watch_ad', methods=['POST'])
-def watch_ad():
-    data = request.get_json()
-    user_id = data.get('userId')
     
     # Kullanıcıyı veritabanından bul
     conn = get_db_connection()
@@ -209,3 +203,5 @@ def claim_daily():
     finally:
         cur.close()
         conn.close()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
