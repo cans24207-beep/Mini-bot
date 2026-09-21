@@ -76,5 +76,22 @@ def convert_points():
         'new_balance': new_balance
     })
 
+@app.route('/api/watch_ad', methods=['POST'])
+def watch_ad():
+    data = request.get_json(silent=True) or {}
+    telegram_id = str(data.get('user_id', '')).strip()
+    if not telegram_id or telegram_id == 'None':
+        return jsonify({'success': False, 'error': 'Kullanici bulunamadi.'}), 400
+
+    conn = get_db_connection()
+    conn.execute('INSERT OR IGNORE INTO users (telegram_id, points, balance) VALUES (?, 0, 0.0)', (telegram_id,))
+    conn.execute('UPDATE users SET points = points + 25, ads_watched = ads_watched + 1 WHERE telegram_id = ?', (telegram_id,))
+    conn.commit()
+    user = conn.execute('SELECT points, ads_watched FROM users WHERE telegram_id = ?', (telegram_id,)).fetchone()
+    conn.close()
+
+    return jsonify({'success': True, 'points': user['points'], 'ads_watched': user['ads_watched']})
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
