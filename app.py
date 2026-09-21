@@ -1,8 +1,8 @@
-rm -f app.py && cat << 'EOF' > app.py
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import datetime
 import json
+import os
 
 app = Flask(__name__)
 
@@ -214,4 +214,5 @@ def withdraw():
     return jsonify({'success': True, 'new_points': new_points})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)EOF
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
