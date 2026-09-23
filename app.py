@@ -58,6 +58,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/yeni')
+def yeni():
+    return render_template('bot_arayuzu.html')
+
+
 @app.route('/api/user_data', methods=['POST'])
 def user_data():
     data = request.get_json(silent=True) or {}
