@@ -85,6 +85,15 @@ svg{display:block}
 .bx{border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;background:#0b0b0b}
 .big2{font-size:32px;font-weight:700;color:var(--gold)}
 .sc input,.sc select{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid var(--line);background:#000;color:var(--tx);font:inherit}
+
+.logo img{mix-blend-mode:normal;will-change:transform;transform:translateZ(0)}
+.ai{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#5a4515,#2a2010);border:1px solid var(--gold2);color:var(--gold);font-weight:700}
+.bub{max-width:88%;padding:10px 14px;border-radius:16px;margin:8px 0;font-size:14px;line-height:1.5}
+.bub.a{background:#151208;border:1px solid var(--line);border-top-left-radius:4px}
+.bub.u{margin-left:auto;width:fit-content;background:#3a2d12;color:var(--tx);border-top-right-radius:4px}
+.qs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.qs .gb{padding:16px 8px;border-radius:14px;font-size:14px}
 </style>
 </head>
 <body>
@@ -182,13 +191,14 @@ function show(t,h){$('st').textContent=t;$('sc').innerHTML=h;$('scr').hidden=fal
 function back(){$('scr').hidden=true;clearInterval(adT);if(tg)tg.BackButton.hide();refresh()}
 $('sb').onclick=back;if(tg)tg.BackButton.onClick(back);
 
-function ads(){show('Reklam İzle','<div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">REKLAM ALANI</div><div class="big2" id="adC">5</div><div id="adI"></div></div><button class="gb" id="adGo" style="width:100%;padding:12px">Reklamları Başlat</button><p style="margin-top:12px">Her reklam 5 saniye sürer ve 25 puan kazandırır. 15 reklam limiti 12 saatte bir yenilenir.</p>');adInfo();$('adGo').onclick=runAd}
-function adInfo(){$('adI').textContent='İzlenen: '+S.ads+'/15 · Puan: '+S.points}
-function runAd(){if(S.ads>=15)return T('12 saatlik reklam limitin doldu.');clearInterval(adT);var n=5;$('adGo').disabled=true;$('adC').textContent=n;$('adI').textContent='Reklam '+(S.ads+1)+'/15 izleniyor...';
-adT=setInterval(function(){n--;$('adC').textContent=n;if(n>0)return;clearInterval(adT);api('watch_ad').then(function(d){if(!d.success){$('adGo').disabled=false;adInfo();return T(d.error)}S.ads=d.ads_watched;S.points=d.points;adInfo();if(S.ads<15&&!$('scr').hidden)runAd();else{$('adGo').disabled=false;if(S.ads>=15)T('Reklamlar bitti, 12 saat sonra yenilenir.')}})},1000)}
+var adBusy=false;
+function ads(){adBusy=false;clearInterval(adT);show('Reklam İzle','<div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">REKLAM ALANI</div><div class="big2" id="adC">5</div><div id="adI"></div></div><button class="gb" id="adGo" style="width:100%;padding:12px"></button><p style="margin-top:12px">Her reklam 5 saniye sürer ve 25 puan kazandırır. Sıradaki reklam için tekrar dokun. 15 reklam limiti 12 saatte bir yenilenir.</p>');adInfo();$('adGo').onclick=runAd}
+function adInfo(){$('adI').textContent='İzlenen: '+S.ads+'/15 · Puan: '+S.points;var b=$('adGo');b.disabled=S.ads>=15;b.textContent=S.ads>=15?'Bugünlük bitti':(S.ads?'Sıradaki Reklamı İzle ('+(S.ads+1)+'/15)':'Reklam İzle')}
+function runAd(){if(S.ads>=15||adBusy)return;adBusy=true;clearInterval(adT);var n=5,b=$('adGo');b.disabled=true;b.textContent='İzleniyor...';$('adC').textContent=n;$('adI').textContent='Reklam '+(S.ads+1)+'/15 izleniyor...';
+adT=setInterval(function(){n--;$('adC').textContent=n;if(n>0)return;clearInterval(adT);api('watch_ad').then(function(d){adBusy=false;if(!d.success){adInfo();return T(d.error)}S.ads=d.ads_watched;S.points=d.points;$('adsBtn').textContent=S.ads+'/15';adInfo();$('adC').textContent=5;T('+25 puan')})},1000)}
 
 function tasks(g){var L=S.tasks.filter(function(t){return t.g==g}),n=L.filter(function(t){return S.done.indexOf(t.id)>-1}).length;
-show(g=='k'?'Kolay Görevler':'Zorlu Görevler','<p>'+n+'/'+L.length+' tamamlandı · 12 saatte bir yenilenir</p>'+L.map(function(t,i){var d=S.done.indexOf(t.id)>-1;return '<div class="row"><div><b>'+(i+1)+'. '+esc(t.t)+'</b><div style="font-size:12px;color:#9a9483">+'+t.p+' puan</div></div><button class="gb" data-t="'+t.id+'"'+(d?' disabled':'')+'>'+(d?'Tamamlandı':'Yap')+'</button></div>'}).join(''));
+show(g=='k'?'Kolay Görevler':'Zorlu Görevler',(L.length?'<p>'+n+'/'+L.length+' tamamlandı · 12 saatte bir yenilenir</p>':'<p>Yükleniyor...</p>')+L.map(function(t,i){var d=S.done.indexOf(t.id)>-1;return '<div class="row"><div><b>'+(i+1)+'. '+esc(t.t)+'</b><div style="font-size:12px;color:#9a9483">+'+t.p+' puan</div></div><button class="gb" data-t="'+t.id+'"'+(d?' disabled':'')+'>'+(d?'Tamamlandı':'Yap')+'</button></div>'}).join(''));
 $('sc').querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){var t=S.tasks.find(function(x){return x.id==b.dataset.t});if(t.u){tg?tg.openLink(t.u):window.open(t.u)}b.disabled=true;api('task',{task_id:t.id}).then(function(d){if(d.success){S.done.push(t.id);S.points=d.points;T('+'+d.reward+' puan');tasks(g)}else{T(d.error);b.disabled=false}})}})}
 
 function refs(){var l=BOT_LINK+uid;show('Referans','<div class="bx"><b>Davet bağlantın</b><div style="word-break:break-all;margin:8px 0;color:#f5f1e6;font-size:13px">'+esc(l)+'</div><button class="gb" id="rc">Kopyala</button> <button class="gb" id="rs">Paylaş</button></div><h4>Davet ettiklerin ('+S.ref_count+')</h4>'+(S.refs.length?S.refs.map(function(r){return '<div class="row">'+esc(r)+'</div>'}).join(''):'<p>Henüz kimse katılmadı.</p>'));
@@ -215,9 +225,14 @@ var ABOUT=`<h4>M&amp;A Şirketi Sunar</h4><p>Şirketimizde oyun geliştirme, soh
 <h4>Gelecek Vizyonumuz</h4><p>Önümüzdeki dönemde oyunlar, sohbet uygulamaları ve ödül sistemlerini tek çatı altında buluşturan büyük bir dijital ekosistem kurmayı hedefliyoruz. Sürekli gelişen teknolojimizle kullanıcı memnuniyetini her zaman ön planda tutacağız.</p>
 <h4>Sonuç</h4><p>M&amp;A, teknoloji ve yeniliği bir araya getiren güçlü bir markadır. Oyun geliştirme, sohbet platformları ve reklam izleyerek ödül kazanma sistemiyle dijital dünyanın yeni nesil projelerini üretmeye devam edecektir.</p><p><b>M&amp;A — Geleceği Birlikte İnşa Ediyoruz.</b></p>`;
 
-var K=function(f){return function(){refresh(f)}};
+var cs;
+function busy(){var a=document.activeElement;if(adBusy&&!$('scr').hidden)return true;if(a&&/INPUT|SELECT/.test(a.tagName))return true;return [].some.call($('sc').querySelectorAll('input'),function(i){return i.value})}
+var K=function(f){return function(){cs=f;f();refresh(function(){if(cs===f&&!$('scr').hidden&&!busy())f()})}};
+var SSS={puan:'',cuzdan:'',bilgi:'',gorev:''};
+function destek(){show('Canlı Destek','<div class="ai"><div class="av">AI</div><div><b>M&amp;A Asistan</b><div style="font-size:12px;color:#9a9483">● Çevrimiçi</div></div></div><div class="bub a">Merhaba! Ben M&amp;A Asistan. Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçin.</div><div class="qs"><button class="gb" data-q="puan">Puan Sistemi</button><button class="gb" data-q="cuzdan">Cüzdan</button><button class="gb" data-q="bilgi">Bilgi</button><button class="gb" data-q="gorev">Reklam ve Görev</button></div><div id="chat"></div>');
+$('sc').querySelectorAll('[data-q]').forEach(function(b){b.onclick=function(){$('chat').insertAdjacentHTML('beforeend','<div class="bub u">'+b.textContent+'</div><div class="bub a">'+(SSS[b.dataset.q]||'Bu bölümün yazısı yakında eklenecek.')+'</div>');$('chat').lastChild.scrollIntoView({behavior:'smooth',block:'end'})}})}
 ACTIONS['Hakkında']=function(){show('Hakkında',ABOUT)};
-ACTIONS['Canlı Destek']=function(){var u='https://t.me/'+DESTEK;tg?tg.openTelegramLink(u):window.open(u)};
+ACTIONS['Canlı Destek']=destek;
 ACTIONS['Haber']=function(){show('Haber','<h4>Yeni Güncelleme Yayında!</h4><p>Daha güçlü, daha hızlı, daha seninle.</p>')};
 ACTIONS['Katıl']=daily;
 ACTIONS['Reklam İzle']=K(ads);
