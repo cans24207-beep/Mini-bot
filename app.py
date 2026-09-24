@@ -25,8 +25,37 @@ TASKS = {
 }
 
 
+_pool = []
+
+
 def db():
+    while _pool:
+        c = _pool.pop()
+        try:
+            if not c.closed:
+                k = c.cursor()
+                c.autocommit = True
+                k.execute('SELECT 1')
+                c.autocommit = False
+                k.close()
+                return c
+        except Exception:
+            pass
     return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+
+
+def release(c):
+    try:
+        c.rollback()
+        if not c.closed and len(_pool) < 4:
+            _pool.append(c)
+            return
+    except Exception:
+        pass
+    try:
+        c.close()
+    except Exception:
+        pass
 
 
 def init_db():
@@ -65,12 +94,15 @@ def jl(s):
 
 def get_user(c, uid):
     k = c.cursor()
-    k.execute('INSERT INTO users (telegram_id) VALUES (%s) ON CONFLICT (telegram_id) DO NOTHING', (uid,))
     k.execute('SELECT * FROM users WHERE telegram_id = %s', (uid,))
-    u = dict(k.fetchone())
-    c.commit()
+    r = k.fetchone()
+    if not r:
+        k.execute('INSERT INTO users (telegram_id) VALUES (%s) ON CONFLICT (telegram_id) DO NOTHING', (uid,))
+        k.execute('SELECT * FROM users WHERE telegram_id = %s', (uid,))
+        r = k.fetchone()
+        c.commit()
     k.close()
-    return u
+    return dict(r)
 
 
 @app.before_request
@@ -107,10 +139,17 @@ def api(path):
                 print('HATA', path, e)
                 return jsonify({'success': False, 'error': 'Sunucu hatası, tekrar dene.'}), 500
             finally:
-                c.close()
+                release(c)
         app.add_url_rule('/api/' + path, 'v_' + path, view, methods=['POST'])
         return fn
     return deco
+
+
+@app.after_request
+def _nocache(r):
+    if request.path == '/':
+        r.headers['Cache-Control'] = 'no-store'
+    return r
 
 
 @app.route('/')
@@ -121,7 +160,7 @@ def index():
 @api('state')
 def state(c, u, uid, d):
     k = c.cursor()
-    if d.get('name'):
+    if d.get('name') and str(d['name'])[:40] != (u.get('name') or ''):
         k.execute('UPDATE users SET name = %s WHERE telegram_id = %s', (str(d['name'])[:40], uid))
     ref = str(d.get('ref') or '').strip()
     if ref and ref != uid and not u.get('referrer') and u['points'] == 0 and u['ads_watched'] == 0:

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>M&A Bot Arayüzü</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat+Brush&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Caveat+Brush&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{--bg:#000;--card:#0d0d0d;--line:#3a3220;--gold:#e9b949;--gold2:#b8862b;--tx:#f5f1e6;--mut:#9a9483;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -243,5 +243,53 @@ ACTIONS['Referans']=K(refs);
 ACTIONS['Cüzdan']=K(wal);
 refresh();
 </script>
+<!--V3-->
+<style>
+.logo img{mix-blend-mode:normal;will-change:transform;transform:translateZ(0)}
+.dots{bottom:8px;gap:6px}.dots i{width:6px;height:6px}
+.news{padding:10px 10px 10px 14px}.news h3{font-size:16px}.news p{font-size:12px}
+.mini{flex:0 0 110px;height:70px}.mini .m{font-size:13px;padding:5px}
+.pbar{height:6px;border-radius:3px;background:#222;overflow:hidden;margin-top:6px}.pbar i{display:block;height:100%;width:0;background:var(--gold)}
+.ai{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,#5a4515,#2a2010);border:1px solid var(--gold2);color:var(--gold);font-weight:700}
+.bub{max-width:88%;padding:10px 14px;border-radius:16px;margin:8px 0;font-size:14px;line-height:1.5}
+.bub.a{background:#151208;border:1px solid var(--line);border-top-left-radius:4px}
+.bub.u{margin-left:auto;width:fit-content;background:#3a2d12;color:var(--tx);border-top-right-radius:4px}
+.qs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.qs .gb{padding:16px 8px;border-radius:14px;font-size:14px}
+</style>
+<script>
+var AD_SURE=3,AD_ARA=5,adBusy=false,adG=0,lastAd=0,cs;
+// AD_SURE: reklam süresi (gerçek reklam bağlanınca reklamın kendi süresi olur), AD_ARA: iki reklam arası bekleme
+function ads(){clearTimeout(adT);clearInterval(adG);adBusy=false;show('Reklam İzle','<div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">REKLAM ALANI</div><div id="adI" style="margin:12px 0"></div><div class="pbar"><i id="adP"></i></div></div><button class="gb" id="adGo" style="width:100%;padding:12px"></button><p style="margin-top:12px">Reklamı izle, 25 puan kazan. İki reklam arasında 5 saniye beklenir. 15 reklam limiti 12 saatte bir yenilenir.</p>');$('adGo').onclick=runAd;adInfo();var r=Math.ceil(AD_ARA-(Date.now()-lastAd)/1000);if(lastAd&&r>0)adGap(r)}
+function adInfo(){$('adI').textContent='İzlenen: '+S.ads+'/15 · Puan: '+S.points;var b=$('adGo');b.disabled=S.ads>=15;b.textContent=S.ads>=15?'Bugünlük bitti':(S.ads?'Sıradaki Reklamı İzle ('+(S.ads+1)+'/15)':'Reklam İzle')}
+function adGap(n){var b=$('adGo');b.disabled=true;b.textContent='Sıradaki reklam: '+n+' sn';clearInterval(adG);adG=setInterval(function(){n--;if(n>0){b.textContent='Sıradaki reklam: '+n+' sn';return}clearInterval(adG);adInfo()},1000)}
+function runAd(){if(S.ads>=15||adBusy)return;adBusy=true;var b=$('adGo'),p=$('adP');b.disabled=true;b.textContent='Reklam oynatılıyor...';p.style.transition='none';p.style.width='0';setTimeout(function(){p.style.transition='width '+AD_SURE+'s linear';p.style.width='100%'},30);
+adT=setTimeout(function(){api('watch_ad').then(function(d){adBusy=false;lastAd=Date.now();p.style.transition='none';p.style.width='0';if(!d.success){T(d.error);adInfo();return adGap(AD_ARA)}S.ads=d.ads_watched;S.points=d.points;$('adsBtn').textContent=S.ads+'/15';T('+25 puan');adInfo();adGap(AD_ARA)})},AD_SURE*1000)}
+
+function wal(){var tl=cur=='TL',v=tl?S.balance:S.balance/S.usdt;
+show('Cüzdan','<div style="text-align:right"><button class="gb" id="cu">'+cur+' ⇄</button></div><div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">Güncel puan</div><div class="big2">'+S.points+'</div><div style="margin-top:8px">Bakiye: <b>'+(tl?'₺'+v.toFixed(2):v.toFixed(2)+' USDT')+'</b></div></div>'
++'<div class="bx"><b>Puan → TL çevir</b><p style="font-size:12px;margin:4px 0">1000 puan = 35 TL</p><input id="cv" type="number" inputmode="numeric" placeholder="Puan (en az 1000)"><button class="gb" id="cvb" style="width:100%;padding:12px">Çevir</button></div>'
++'<div class="bx"><b>Para çek</b><p style="font-size:12px;margin:4px 0">En az '+S.min+' TL. Talepler manuel onaylanır.</p><select id="wm"><option value="havale">Havale / IBAN</option><option value="usdt">USDT</option></select><input id="wa" type="number" inputmode="decimal" placeholder="Tutar (TL)"><input id="wd" placeholder="Ad Soyad + IBAN (TR...)"><button class="gb" id="wb" style="width:100%;padding:12px">Çekim Talep Et</button></div>');
+$('cu').onclick=function(){cur=tl?'USDT':'TL';wal()};
+$('wm').onchange=function(){$('wd').placeholder=this.value=='usdt'?'USDT adresi + ağ (örn. TRC20)':'Ad Soyad + IBAN (TR...)'};
+$('cvb').onclick=function(){var n=parseInt($('cv').value);if(!(n>=1000))return T('En az 1000 puan girin.');api('convert',{amount_pts:n}).then(function(d){if(d.success){S.points=d.points;S.balance=d.balance;T('Bakiyene eklendi');wal()}else T(d.error)})};
+$('wb').onclick=function(){api('withdraw',{method:$('wm').value,amount:parseFloat($('wa').value),details:$('wd').value}).then(function(d){if(d.success){S.balance=d.balance;T('Çekim talebin alındı');wal()}else T(d.error)})}}
+
+var SSS={puan:'',cuzdan:'',bilgi:'',gorev:''};
+function destek(){show('Canlı Destek','<div class="ai"><div class="av">AI</div><div><b>M&amp;A Asistan</b><div style="font-size:12px;color:#9a9483">● Çevrimiçi</div></div></div><div class="bub a">Merhaba! Ben M&amp;A Asistan. Size nasıl yardımcı olabilirim? Aşağıdan bir konu seçin.</div><div class="qs"><button class="gb" data-q="puan">Puan Sistemi</button><button class="gb" data-q="cuzdan">Cüzdan</button><button class="gb" data-q="bilgi">Bilgi</button><button class="gb" data-q="gorev">Reklam ve Görev</button></div><div id="chat"></div>');
+$('sc').querySelectorAll('[data-q]').forEach(function(b){b.onclick=function(){$('chat').insertAdjacentHTML('beforeend','<div class="bub u">'+b.textContent+'</div><div class="bub a">'+(SSS[b.dataset.q]||'Bu bölümün yazısı yakında eklenecek.')+'</div>');$('chat').lastChild.scrollIntoView({behavior:'smooth',block:'end'})}})}
+
+function busy(){var a=document.activeElement;if(adBusy)return true;if(a&&/INPUT|SELECT/.test(a.tagName))return true;return [].some.call($('sc').querySelectorAll('input'),function(i){return i.value})}
+function K3(f){return function(){cs=f;f();refresh(function(){if(cs===f&&!$('scr').hidden&&!busy())f()})}}
+ACTIONS['Canlı Destek']=destek;
+ACTIONS['Reklam İzle']=K3(ads);
+ACTIONS['Kolay Görevler']=K3(function(){tasks('k')});
+ACTIONS['Görevler']=ACTIONS['Kolay Görevler'];
+ACTIONS['Zorlu Görevler']=K3(function(){tasks('z')});
+ACTIONS['Referans']=K3(refs);
+ACTIONS['Cüzdan']=K3(wal);
+</script>
+<!--/V3-->
 </body>
 </html>
