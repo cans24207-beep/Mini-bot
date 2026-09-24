@@ -70,6 +70,21 @@ svg{display:block}
 .toast.show{opacity:1;translate:-50% 0}
 @media (max-height:700px){.ad{height:150px}.slide h2{font-size:20px}.nav button{min-height:0}}
 @media (prefers-reduced-motion:reduce){.track{transition:none}}
+
+.nav button:nth-child(1){order:1}.nav button:nth-child(2){order:4}.nav button:nth-child(3){order:2}.nav button:nth-child(4){order:3}.nav button:nth-child(5){order:5}
+.toast{z-index:30}
+.scr{position:fixed;inset:0;z-index:20;background:#000;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.scr[hidden]{display:none}
+.sh{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:16px}
+.sh button{color:var(--gold);font-weight:600}
+.sc{flex:1;overflow:auto;padding:14px 14px calc(24px + env(safe-area-inset-bottom,0px));font-size:14px;line-height:1.55;color:#d6d0bf}
+.sc h4{color:var(--gold);margin:16px 0 4px;font-size:15px}.sc p{margin:0 0 8px}.sc ul{margin:0 0 8px;padding-left:18px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;margin-bottom:8px;border:1px solid var(--line);border-radius:14px;background:#0b0b0b}
+.gb{padding:8px 16px;border:1px solid var(--gold2);border-radius:999px;background:linear-gradient(180deg,#5a4515,#2a2010);font-weight:600;font-size:13px;color:var(--tx)}
+.gb:disabled{opacity:.45}
+.bx{border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;background:#0b0b0b}
+.big2{font-size:32px;font-weight:700;color:var(--gold)}
+.sc input,.sc select{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid var(--line);background:#000;color:var(--tx);font:inherit}
 </style>
 </head>
 <body>
@@ -113,13 +128,14 @@ svg{display:block}
 
   <!-- ALT MENÜ -->
   <nav class="nav">
-    <button data-act="Reklam İzle"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e9b949" stroke="none"/><path d="M10 8l6 4-6 4z" fill="#000" stroke="none"/></svg><span class="lbl">Reklam İzle</span><span class="big">15/0</span><small>Ödüller kazan</small></button>
+    <button data-act="Reklam İzle"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#e9b949" stroke="none"/><path d="M10 8l6 4-6 4z" fill="#000" stroke="none"/></svg><span class="lbl">Reklam İzle</span><span class="big" id="adsBtn">0/15</span><small>Ödüller kazan</small></button>
     <button data-act="Referans"><svg class="ico" viewBox="0 0 24 24" style="fill:#e9b949;stroke:none"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 19c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6z"/><circle cx="17" cy="9" r="2.7" opacity=".8"/><path d="M16 13.2c3.2 0 5.5 2 5.5 5.3H17c0-2-.4-3.7-1-5.3z" opacity=".8"/></svg><span class="lbl">Referans</span><small>Arkadaşınla Paylaş</small></button>
     <button data-act="Kolay Görevler"><svg class="ico" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10l1 1 2-2M13 10h3M8.5 15l1 1 2-2M13 15h3"/></svg><span class="lbl">Kolay Görevler</span></button>
     <button data-act="Zorlu Görevler"><svg class="ico" viewBox="0 0 24 24" style="fill:#e9b949;stroke:none"><rect x="3" y="14" width="4.5" height="7" rx="1"/><rect x="9.7" y="9" width="4.5" height="12" rx="1"/><rect x="16.5" y="3" width="4.5" height="18" rx="1"/></svg><span class="lbl">Zorlu Görevler</span></button>
-    <button data-act="Cüzdan"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3M4 7.5V18a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16" cy="14" r="1" fill="#e9b949"/></svg><span class="lbl">Cüzdan</span><span class="big">₺0</span><small>Bakiyeni görüntüle</small></button>
+    <button data-act="Cüzdan"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3M4 7.5V18a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5z"/><circle cx="16" cy="14" r="1" fill="#e9b949"/></svg><span class="lbl">Cüzdan</span><span class="big" id="walBtn">₺0</span><small>Bakiyeni görüntüle</small></button>
   </nav>
 </div>
+<div class="scr" id="scr" hidden><div class="sh"><button id="sb">‹ Geri</button><b id="st"></b></div><div class="sc" id="sc"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -145,7 +161,7 @@ svg{display:block}
 var tg=window.Telegram&&window.Telegram.WebApp;
 if(tg){try{tg.ready();tg.expand();tg.setHeaderColor('#000000');tg.setBackgroundColor('#000000');}catch(e){}}
 // Buton işlevleri: buton adına karşılık gelen işlemi buraya ekle. Örnek:
-// 'Canlı Destek':function(){tg.openTelegramLink('https://t.me/GERCEK_DESTEK_ADI')}
+// 'Canlı Destek':function(){tg.openTelegramLink('https://t.me/DESTEK_KULLANICI_ADI')}
 var ACTIONS={};
 var toast=document.getElementById('toast'),tt;
 document.querySelectorAll('[data-act]').forEach(function(b){b.addEventListener('click',function(){
@@ -153,6 +169,64 @@ document.querySelectorAll('[data-act]').forEach(function(b){b.addEventListener('
   toast.textContent=b.dataset.act+' yakında aktif olacak';toast.classList.add('show');
   clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('show')},1800);
 })});
+</script>
+<script>
+var BOT_LINK='https://t.me/BOT_KULLANICI_ADI?startapp=',DESTEK='DESTEK_KULLANICI_ADI';
+var $=function(i){return document.getElementById(i)},U=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user,
+uid=U?String(U.id):'test_'+Math.floor(Math.random()*1000),S={ads:0,points:0,balance:0,tasks:[],done:[],refs:[],ref_count:0,usdt:40,min:100},cur='TL',adT;
+function T(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('show')},2500)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return '&#'+c.charCodeAt(0)+';'})}
+function api(p,b){b=b||{};b.user_id=uid;return fetch('/api/'+p,{method:'POST',headers:{'Content-Type':'application/json','X-Init-Data':tg?tg.initData:''},body:JSON.stringify(b)}).then(function(r){return r.json()}).catch(function(){return {success:false,error:'Bağlantı hatası.'}})}
+function refresh(cb){api('state',{name:U?U.first_name:'',ref:(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||''}).then(function(d){if(!d.success)return T(d.error);S=d;$('adsBtn').textContent=d.ads+'/15';$('walBtn').textContent='₺'+d.balance.toFixed(2);if(cb)cb()})}
+function show(t,h){$('st').textContent=t;$('sc').innerHTML=h;$('scr').hidden=false;$('sc').scrollTop=0;if(tg)tg.BackButton.show()}
+function back(){$('scr').hidden=true;clearInterval(adT);if(tg)tg.BackButton.hide();refresh()}
+$('sb').onclick=back;if(tg)tg.BackButton.onClick(back);
+
+function ads(){show('Reklam İzle','<div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">REKLAM ALANI</div><div class="big2" id="adC">5</div><div id="adI"></div></div><button class="gb" id="adGo" style="width:100%;padding:12px">Reklamları Başlat</button><p style="margin-top:12px">Her reklam 5 saniye sürer ve 25 puan kazandırır. 15 reklam limiti 12 saatte bir yenilenir.</p>');adInfo();$('adGo').onclick=runAd}
+function adInfo(){$('adI').textContent='İzlenen: '+S.ads+'/15 · Puan: '+S.points}
+function runAd(){if(S.ads>=15)return T('12 saatlik reklam limitin doldu.');clearInterval(adT);var n=5;$('adGo').disabled=true;$('adC').textContent=n;$('adI').textContent='Reklam '+(S.ads+1)+'/15 izleniyor...';
+adT=setInterval(function(){n--;$('adC').textContent=n;if(n>0)return;clearInterval(adT);api('watch_ad').then(function(d){if(!d.success){$('adGo').disabled=false;adInfo();return T(d.error)}S.ads=d.ads_watched;S.points=d.points;adInfo();if(S.ads<15&&!$('scr').hidden)runAd();else{$('adGo').disabled=false;if(S.ads>=15)T('Reklamlar bitti, 12 saat sonra yenilenir.')}})},1000)}
+
+function tasks(g){var L=S.tasks.filter(function(t){return t.g==g}),n=L.filter(function(t){return S.done.indexOf(t.id)>-1}).length;
+show(g=='k'?'Kolay Görevler':'Zorlu Görevler','<p>'+n+'/'+L.length+' tamamlandı · 12 saatte bir yenilenir</p>'+L.map(function(t,i){var d=S.done.indexOf(t.id)>-1;return '<div class="row"><div><b>'+(i+1)+'. '+esc(t.t)+'</b><div style="font-size:12px;color:#9a9483">+'+t.p+' puan</div></div><button class="gb" data-t="'+t.id+'"'+(d?' disabled':'')+'>'+(d?'Tamamlandı':'Yap')+'</button></div>'}).join(''));
+$('sc').querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(){var t=S.tasks.find(function(x){return x.id==b.dataset.t});if(t.u){tg?tg.openLink(t.u):window.open(t.u)}b.disabled=true;api('task',{task_id:t.id}).then(function(d){if(d.success){S.done.push(t.id);S.points=d.points;T('+'+d.reward+' puan');tasks(g)}else{T(d.error);b.disabled=false}})}})}
+
+function refs(){var l=BOT_LINK+uid;show('Referans','<div class="bx"><b>Davet bağlantın</b><div style="word-break:break-all;margin:8px 0;color:#f5f1e6;font-size:13px">'+esc(l)+'</div><button class="gb" id="rc">Kopyala</button> <button class="gb" id="rs">Paylaş</button></div><h4>Davet ettiklerin ('+S.ref_count+')</h4>'+(S.refs.length?S.refs.map(function(r){return '<div class="row">'+esc(r)+'</div>'}).join(''):'<p>Henüz kimse katılmadı.</p>'));
+$('rc').onclick=function(){navigator.clipboard.writeText(l).then(function(){T('Kopyalandı')},function(){T(l)})};
+$('rs').onclick=function(){var u='https://t.me/share/url?url='+encodeURIComponent(l);tg?tg.openTelegramLink(u):window.open(u)}}
+
+function wal(){var tl=cur=='TL',v=tl?S.balance:S.balance/S.usdt;
+show('Cüzdan','<div style="text-align:right"><button class="gb" id="cu">'+cur+' ⇄</button></div><div class="bx" style="text-align:center"><div style="font-size:12px;color:#9a9483">Güncel puan</div><div class="big2">'+S.points+'</div><div style="margin-top:8px">Gerçek para: <b>'+(tl?'₺'+v.toFixed(2):v.toFixed(2)+' USDT')+'</b></div></div>'
++'<div class="bx"><b>Puan → TL çevir</b><p style="font-size:12px;margin:4px 0">1000 puan = 35 TL</p><input id="cv" type="number" inputmode="numeric" placeholder="Puan (en az 1000)"><button class="gb" id="cvb" style="width:100%;padding:12px">Çevir</button></div>'
++'<div class="bx"><b>Para çek</b><p style="font-size:12px;margin:4px 0">En az '+S.min+' TL. Talepler manuel onaylanır.</p><select id="wm"><option value="havale">Havale / IBAN</option><option value="usdt">USDT</option></select><input id="wa" type="number" inputmode="decimal" placeholder="Tutar (TL)"><input id="wd" placeholder="Ad Soyad + IBAN (TR...)"><button class="gb" id="wb" style="width:100%;padding:12px">Çekim Talep Et</button></div>');
+$('cu').onclick=function(){cur=tl?'USDT':'TL';wal()};
+$('wm').onchange=function(){$('wd').placeholder=this.value=='usdt'?'USDT adresi + ağ (örn. TRC20)':'Ad Soyad + IBAN (TR...)'};
+$('cvb').onclick=function(){var n=parseInt($('cv').value);if(!(n>=1000))return T('En az 1000 puan girin.');api('convert',{amount_pts:n}).then(function(d){if(d.success){S.points=d.points;S.balance=d.balance;T('Bakiyene eklendi');wal()}else T(d.error)})};
+$('wb').onclick=function(){api('withdraw',{method:$('wm').value,amount:parseFloat($('wa').value),details:$('wd').value}).then(function(d){if(d.success){S.balance=d.balance;T('Çekim talebin alındı');wal()}else T(d.error)})}}
+
+function daily(){api('claim_daily').then(function(d){T(d.success?'Günlük ödül alındı! +100 puan':d.error);refresh()})}
+var ABOUT=`<h4>M&amp;A Şirketi Sunar</h4><p>Şirketimizde oyun geliştirme, sohbet uygulamaları ve yenilikçi dijital projeler yer almaktadır. Amacımız; insanların eğlenebileceği, iletişim kurabileceği ve dijital dünyada kazanç fırsatlarından yararlanabileceği modern bir ekosistem oluşturmaktır.</p>
+<h4>Biz Kimiz?</h4><p>M&amp;A, teknoloji ve yazılım alanında faaliyet gösteren yenilikçi bir şirkettir. Geliştirdiğimiz her proje; kalite, güvenlik, kullanıcı deneyimi ve sürdürülebilir gelişim anlayışı üzerine kuruludur. Hedefimiz, milyonlarca kullanıcıya ulaşabilecek güçlü dijital platformlar geliştirmektir.</p>
+<h4>Oyun Geliştirme</h4><p>Şirketimiz, mobil ve çevrim içi oyunlar geliştirerek eğlenceyi kaliteli bir deneyime dönüştürmeyi hedeflemektedir. Akıcı performans, adil oyun sistemi ve düzenli güncellemeler sayesinde kullanıcılarımıza uzun ömürlü bir oyun deneyimi sunmayı amaçlıyoruz.</p>
+<h4>Sohbet Uygulamaları</h4><p>M&amp;A bünyesinde geliştirilen sohbet uygulamaları; hızlı mesajlaşma, güvenli iletişim ve kullanıcı gizliliğini ön planda tutan modern platformlar olacaktır. İnsanların kolayca iletişim kurabileceği güçlü bir sosyal ortam oluşturmak temel hedeflerimizden biridir.</p>
+<h4>Reklam İzle &amp; Kazan Uygulamamız</h4><p>M&amp;A'nın en dikkat çeken projelerinden biri de Reklam İzle &amp; Kazan uygulamasıdır. Bu sistem sayesinde kullanıcılar, uygulama içerisinde sunulan reklamları izleyerek belirlenen ödülleri kazanabilir. Ayrıca arkadaşlarını davet eden kullanıcılar, referans sistemi üzerinden uygulama kuralları kapsamında komisyon ödülleri elde edebilir.</p><p>Uygulamamızın sunduğu başlıca özellikler:</p>
+<ul><li>Reklam izleyerek ödül kazanma sistemi</li><li>Arkadaş davet etme (referans) ile komisyon fırsatı</li><li>Güvenli cüzdan ve bakiye takibi</li><li>Günlük etkinlikler ve bonus ödüller</li><li>Kullanıcı dostu, sade ve hızlı arayüz</li></ul>
+<p>M&amp;A olarak hedefimiz; kullanıcılarımıza şeffaf kurallar çerçevesinde dijital ödül sistemleri sunarak kolay kullanılabilen bir platform oluşturmaktır.</p>
+<h4>Gelecek Vizyonumuz</h4><p>Önümüzdeki dönemde oyunlar, sohbet uygulamaları ve ödül sistemlerini tek çatı altında buluşturan büyük bir dijital ekosistem kurmayı hedefliyoruz. Sürekli gelişen teknolojimizle kullanıcı memnuniyetini her zaman ön planda tutacağız.</p>
+<h4>Sonuç</h4><p>M&amp;A, teknoloji ve yeniliği bir araya getiren güçlü bir markadır. Oyun geliştirme, sohbet platformları ve reklam izleyerek ödül kazanma sistemiyle dijital dünyanın yeni nesil projelerini üretmeye devam edecektir.</p><p><b>M&amp;A — Geleceği Birlikte İnşa Ediyoruz.</b></p>`;
+
+var K=function(f){return function(){refresh(f)}};
+ACTIONS['Hakkında']=function(){show('Hakkında',ABOUT)};
+ACTIONS['Canlı Destek']=function(){var u='https://t.me/'+DESTEK;tg?tg.openTelegramLink(u):window.open(u)};
+ACTIONS['Haber']=function(){show('Haber','<h4>Yeni Güncelleme Yayında!</h4><p>Daha güçlü, daha hızlı, daha seninle.</p>')};
+ACTIONS['Katıl']=daily;
+ACTIONS['Reklam İzle']=K(ads);
+ACTIONS['Kolay Görevler']=K(function(){tasks('k')});
+ACTIONS['Görevler']=ACTIONS['Kolay Görevler'];
+ACTIONS['Zorlu Görevler']=K(function(){tasks('z')});
+ACTIONS['Referans']=K(refs);
+ACTIONS['Cüzdan']=K(wal);
+refresh();
 </script>
 </body>
 </html>
